@@ -20,6 +20,7 @@ class Generator:
     sorted_water_dps = []  # All water d_points. Sorted into individual water arrays.
     processed_water_dps = []  # Water d_points that have been made into water polygons.
     all_water_dps = []  # All water d_point indexes, unsorted.
+    water_edge_dps = []
     water_polys = []
     water_edges = []
 
@@ -31,7 +32,7 @@ class Generator:
     marsh_dps = []
 
     sorted_river_dps = []
-    river_dps = []
+    all_river_dps = []
     river_points = []
 
     debug_points = []
@@ -61,6 +62,9 @@ class Generator:
 
         print("Generating forests...")
         self.gen_forests(num_points / 50, 0.01)
+
+        print("Generating rivers...")
+        self.gen_rivers(10)
 
     def gen_geometry(self, regularity):
         self.gen_random_init_points()
@@ -165,7 +169,9 @@ class Generator:
                 to_add = -1
                 for n in neighbour_idxs:
                     viable = not self.check_used(n) and not (
-                        self.check_near_obstacle(n, avoid_water_depth) and avoid_water_depth) and line_d_point_idxs.count(n) == 0
+                        self.check_near_obstacle(n,
+                                                 avoid_water_depth) and avoid_water_depth) and line_d_point_idxs.count(
+                        n) == 0
                     if not viable:
                         continue
 
@@ -195,6 +201,40 @@ class Generator:
                 else:
                     line_d_point_idxs.append(to_add)
         return line_d_point_idxs
+
+    def grow_line_from_to(self, d_point_start, d_point_end, reset_start_on_obstacle=True):
+        start_point = self.delaunay.points[d_point_start]
+        line_points = [start_point]
+        line_dps = [d_point_start]
+        end_point = self.delaunay.points[d_point_end]
+
+        finished = False
+        while not finished and len(line_dps) < 500:
+            last_point = line_points[-1]
+            neighbours = self.get_delaunay_neighbours(line_dps[-1])
+            min_angle = math.inf
+            to_add = -1
+            for n in neighbours:
+                if n == d_point_end:
+                    to_add = n
+                    break
+                n_point = self.delaunay.points[n]
+                last_to_n = vect.subtract(n_point, last_point)
+                last_to_end = vect.subtract(end_point, last_point)
+                angle = vect.angle(last_to_end, last_to_n)
+                if angle < min_angle and n not in line_dps:
+                    min_angle = angle
+                    to_add = n
+            if to_add != -1:
+                if self.check_near_obstacle(to_add, 0, True, False) and reset_start_on_obstacle:
+                    line_dps = [to_add]
+                    line_points = [self.delaunay.points[to_add]]
+                else:
+                    line_dps.append(to_add)
+                    line_points.append(self.delaunay.points[to_add])
+            if to_add == d_point_end or to_add == -1 or to_add in self.all_river_dps:
+                finished = True
+        return line_dps
 
     def get_delaunay_neighbours(self, point_idx):
         indices = self.delaunay.vertex_neighbor_vertices[0]
@@ -244,6 +284,8 @@ class Generator:
             for i in range(len(neighbours)):
                 n = neighbours[i]
                 if n not in self.all_water_dps:
+                    if d_p not in self.water_edge_dps:
+                        self.water_edge_dps.append(d_p)
                     edge_lines.append(self.get_shared_line(d_p, n))
 
             for i in range(len(region)):
@@ -348,3 +390,38 @@ class Generator:
             area = self.grow_area_from_point(size, start_dp_idx, avoid_depth=1)
             self.forest_dps.extend(area)
             total_used += size
+
+    def gen_rivers(self, num_rivers):
+        for r in range(num_rivers):
+            w_edge_dp = self.rand.choice(self.water_edge_dps)
+            min_distance = math.inf
+            m_dp_target = -1
+            for m_dp in self.all_mountain_dps:
+                dist = vect.dist(self.delaunay.points[w_edge_dp], self.delaunay.points[m_dp])
+                if dist < min_distance:
+                    m_dp_target = m_dp
+                    min_distance = dist
+            line_dps = self.grow_line_from_to(w_edge_dp, m_dp_target)
+
+            if len(line_dps) < 2:
+                continue
+
+            self.all_river_dps.extend(line_dps)
+
+            start_corner_verts = self.voronoi.regions[self.voronoi.point_region[line_dps[0]]]
+            land_point = self.delaunay.points[line_dps[1]]
+            min_distance = math.inf
+            water_edge_point = None
+            for v_idx in start_corner_verts:
+                v_point = self.voronoi.vertices[v_idx]
+                dist = vect.dist(land_point, v_point)
+                if dist < min_distance:
+                    water_edge_point = v_point
+                    min_distance = dist
+
+            r_points = [water_edge_point]
+            for i in range(1, len(line_dps)):
+                if line_dps[i] in self.all_mountain_dps:
+                    continue
+                r_points.append(self.delaunay.points[line_dps[i]])
+            self.river_points.append(r_points)

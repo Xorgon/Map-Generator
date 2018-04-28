@@ -40,7 +40,7 @@ class MapCanvas:
     def draw_line(self, p1, p2, color='black', width=1):
         self.canvas.create_line(p1[0], p1[1], p2[0], p2[1], fill=color, width=width)
 
-    def draw_irregular_line(self, p1, p2, splits=3, mag_fact=0.25, color='black'):
+    def draw_irregular_line(self, p1, p2, splits=3, mag_fact=0.25, color='black', width=1):
         points = [p1, p2]
         for i in range(splits):
             new_points = []
@@ -51,11 +51,17 @@ class MapCanvas:
             points = new_points
 
         for i in range(len(points) - 1):
-            self.canvas.create_line(points[i][0], points[i][1], points[i + 1][0], points[i + 1][1], fill=color)
+            self.canvas.create_line(points[i][0], points[i][1], points[i + 1][0], points[i + 1][1], fill=color,
+                                    width=width, smooth=1)
 
     def draw_multi_line(self, points, color='black', width=1):
         for i in range(len(points) - 1):
             self.draw_line(points[i], points[i + 1], color=color, width=width)
+
+    def draw_irregular_multi_line(self, points, splits=3, mag_fact=0.25, color='black', width=1):
+        for i in range(len(points) - 1):
+            self.draw_irregular_line(points[i], points[i + 1], splits=splits, mag_fact=mag_fact, color=color,
+                                     width=width)
 
     def draw_point(self, p, color='black', radius=3):
         self.canvas.create_oval(p[0] - radius, p[1] - radius, p[0] + radius, p[1] + radius, fill=color)
@@ -125,7 +131,13 @@ class MapCanvas:
 
         for edge in gen.water_edges:
             for i in range(len(edge) - 1):
-                self.draw_line(edge[i], edge[i + 1], "#483320", 3)
+                self.draw_line(edge[i], edge[i + 1], "#483320", 2)
+
+        # Rivers
+        for riv in gen.river_points:
+            for i in range(len(riv) - 1):
+                thickness = round(2 * ((len(riv) - i) / len(riv)) ** 0.5)
+                self.draw_irregular_line(riv[i], riv[i + 1], color="#483320", width=int(thickness), splits=2)
 
         # Mountains
         self.draw_all_mountains(gen, 1)
@@ -177,3 +189,5 @@ class MapCanvas:
 
         for p in gen.debug_points:
             self.draw_point(p, "yellow")
+
+        self.draw_multi_line(gen.debug_points, color="yellow")

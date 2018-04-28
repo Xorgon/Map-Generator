@@ -58,13 +58,13 @@ class Generator:
         self.gen_mountains(num_points / 25, 0.8)
 
         print("Generating hills...")
-        self.gen_hills(num_points / 100, 0.005)
+        self.gen_hills(num_points / 75, 0.001)
 
         print("Generating forests...")
-        self.gen_forests(num_points / 50, 0.01)
+        self.gen_forests(num_points / 15, 0.0025)
 
         print("Generating rivers...")
-        self.gen_rivers(10)
+        self.gen_rivers(round(num_points / 500))
 
     def gen_geometry(self, regularity):
         self.gen_random_init_points()

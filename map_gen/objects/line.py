@@ -44,3 +44,11 @@ class Line:
             return self.point1
         else:
             return None
+
+    def get_other_region(self, region):
+        if region == self.regions[0]:
+            return self.regions[1]
+        elif region == self.regions[1]:
+            return self.regions[0]
+        else:
+            return None

@@ -27,7 +27,7 @@ class Generator:
 
     HEIGHT = 910  # 455
     WIDTH = 1588  # 794
-    POINTS = 500
+    POINTS = 3500
     MIN_RED = math.ceil(4 * POINTS / 750)
     MAX_RED = math.ceil(8 * POINTS / 750)
     REGULARITY_IMPROVEMENT = 1
@@ -106,8 +106,8 @@ class Generator:
                 reg = self.rand.choice(self.regions)
                 self.gen_water(reg, size)
 
-            # for i in range(math.ceil(0.75 * self.POINTS / 250)):
-            #     self.gen_area("blue", math.pow(0.18, math.pow(250 / self.POINTS, 1 / 17)))
+                # for i in range(math.ceil(0.75 * self.POINTS / 250)):
+                #     self.gen_area("blue", math.pow(0.18, math.pow(250 / self.POINTS, 1 / 17)))
 
         print("    Finished in {0:.2f} seconds.".format(timeit.timeit(gen_water, number=1)))
 
@@ -223,6 +223,7 @@ class Generator:
                 line_segments.append([(vor.vertices[i, 0], vor.vertices[i, 1]),
                                       (far_point[0], far_point[1])])
 
+        # Generate Point and Line Objects for the Voronoi diagram.
         v_points = []
         v_lines = []
         for vor_line in line_segments:
@@ -253,6 +254,7 @@ class Generator:
             v_lines.append(line)
             line.name = str(len(v_lines))
 
+        # Generate Region Objects
         regions = []
         vor_verts = vor.vertices
         for region in vor.regions:
@@ -260,17 +262,18 @@ class Generator:
             for i in region:
                 if i == -1:
                     continue
+                # TODO: Change these to rectify after lines have been generated so that the point can be moved to the mean of the connected points' coords.
                 p_x = vor_verts[i][0]
                 p_y = vor_verts[i][1]
-                if p_x > self.WIDTH:
-                    p_x = self.WIDTH
-                elif p_x < 0:
-                    p_x = 0
-
-                if p_y > self.HEIGHT:
-                    p_y = self.HEIGHT
-                elif p_y < 0:
-                    p_y = 0
+                # if p_x > self.WIDTH:
+                #     p_x = self.WIDTH
+                # elif p_x < 0:
+                #     p_x = 0
+                #
+                # if p_y > self.HEIGHT:
+                #     p_y = self.HEIGHT
+                # elif p_y < 0:
+                #     p_y = 0
                 points.append(self.get_v_point_from_coords(p_x, p_y, v_points))
 
             lines = []
@@ -660,3 +663,10 @@ class Generator:
         water = Water()
         water.regions = regions_set
         self.waters.append(water)
+
+    def gen_river(self):
+        # Start with a water edge
+        # Find out if it spikes away from the water.
+        # Choose a mountain and aim for it.
+        # Keep going until you hit water or a different mountain.
+        return

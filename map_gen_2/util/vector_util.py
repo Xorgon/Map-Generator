@@ -50,3 +50,8 @@ def split_line(p1, p2, rand, mag_fact=0.25):
     split_p[0] = mid_p[0] + rand_fact * mag_fact * distance * perp_vect[0]
     split_p[1] = mid_p[1] + rand_fact * mag_fact * distance * perp_vect[1]
     return split_p
+
+
+def subtract(a, b):
+    """ Subtracts b from a. """
+    return [a[0] - b[0], a[1] - b[1]]

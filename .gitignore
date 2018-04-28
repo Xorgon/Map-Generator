@@ -51,3 +51,6 @@ manifest.mf
 
 # Linux temp files
 *~
+
+# Python Stuff
+*.pyc

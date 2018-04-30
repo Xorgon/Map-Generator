@@ -1,10 +1,12 @@
 from map_gen_2.canvas import *
 from map_gen_2.generator import Generator
 
-height = 1080
-width = 1920
+width = 3840
+height = 2160
 
-gen = Generator(height, width, 10000, seed="fad53df832j5n", regularity=5)
+# fad53df832j5n 3840, 2160, 25000, 5 Big central sea.
+
+gen = Generator(height, width, 25000, seed="56htncfhdr'##43", regularity=5)
 
 # canvas = MapCanvasBasic(height, width)
 canvas = MapCanvas(height, width)

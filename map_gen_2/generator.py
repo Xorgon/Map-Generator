@@ -52,16 +52,16 @@ class Generator:
         self.gen_geometry(regularity)
 
         print("Generating water...")
-        self.gen_water(num_points / 3, 0.1)
+        self.gen_water(num_points / 4, 0.025)
 
         print("Generating mountains...")
-        self.gen_mountains(num_points / 25, 0.8)
+        self.gen_mountains(num_points / 40, 0.3)
 
         print("Generating hills...")
-        self.gen_hills(num_points / 75, 0.001)
+        self.gen_hills(num_points / 75, 0.0001)
 
         print("Generating forests...")
-        self.gen_forests(num_points / 15, 0.0025)
+        self.gen_forests(num_points / 15, 0.001)
 
         print("Generating rivers...")
         self.gen_rivers(round(num_points / 500))

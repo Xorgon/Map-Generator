@@ -6,6 +6,7 @@ import map_gen_2.util.vector_util as vect
 from matplotlib.path import Path
 import numpy as np
 import aggdraw
+import os
 
 
 class MapCanvasBasic:
@@ -202,9 +203,9 @@ class MapCanvas:
 
     # Assets
     parchment = None
-    mountain = None
-    tree = None
-    hill = None
+    mountain = []
+    tree = []
+    hill = []
 
     image = None
     draw = None
@@ -219,14 +220,19 @@ class MapCanvas:
 
         self.image = self.parchment
         self.draw = aggdraw.Draw(self.image)
-        self.image.paste(self.mountain, (50, 50, 90, 75))
 
     def load_assets(self):
         self.parchment = Image.open("assets/parchment.jpg").convert("RGBA").resize((self.width, self.height),
                                                                                    Image.ANTIALIAS)
-        self.mountain = Image.open("assets/mountain.png").resize((40, 25), Image.ANTIALIAS)
-        self.tree = Image.open("assets/tree.png").resize((5, 8), Image.ANTIALIAS)
-        self.hill = Image.open("assets/hill.png").resize((20, 13), Image.ANTIALIAS)
+        for im in os.listdir("assets/mountains/"):
+            self.mountain.append(
+                Image.open("assets/mountains/" + im).resize((40, 25), Image.ANTIALIAS))
+
+        for im in os.listdir("assets/trees/"):
+            self.tree.append(Image.open("assets/trees/" + im).resize((5, 8), Image.ANTIALIAS))
+
+        for im in os.listdir("assets/hills/"):
+            self.hill.append(Image.open("assets/hills/" + im).resize((20, 13), Image.ANTIALIAS))
 
     def show_map(self):
         self.image.show()
@@ -276,7 +282,7 @@ class MapCanvas:
                                  int(round(p[1])) + math.ceil(image.height / 2)),
                          mask=image)
 
-    def fill_region_with_image(self, points, image, step=5, rand=None, offset_fact=0.5):
+    def fill_region_with_image(self, points, image, step=5, offset_fact=0.5):
         min_p = [self.width, self.height]
         max_p = [0, 0]
 
@@ -297,10 +303,32 @@ class MapCanvas:
         fill_points = sorted(fill_points, key=lambda p: p[1])
 
         for fill_point in fill_points:
-            if rand is None:
-                rand = Random()
-            offset = [(rand.random() - 0.5) * step * offset_fact, (rand.random() - 0.5) * step * offset_fact]
+            offset = [(self.rand.random() - 0.5) * step * offset_fact, (self.rand.random() - 0.5) * step * offset_fact]
             self.draw_image_at(vect.add(fill_point, offset), image)
+
+    def fill_region_with_image_set(self, points, image_set, step=5, offset_fact=0.5):
+        min_p = [self.width, self.height]
+        max_p = [0, 0]
+
+        for point in points:
+            min_p[0] = min(min_p[0], point[0])
+            min_p[1] = min(min_p[1], point[1])
+            max_p[0] = max(max_p[0], point[0])
+            max_p[1] = max(max_p[1], point[1])
+
+        path = Path(points)
+
+        fill_points = []
+        for x in np.arange(min_p[0], max_p[0], step):
+            for y in np.arange(min_p[1], max_p[1], step):
+                if path.contains_point([x, y]):
+                    fill_points.append([x, y])
+
+        fill_points = sorted(fill_points, key=lambda p: p[1])
+
+        for fill_point in fill_points:
+            offset = [(self.rand.random() - 0.5) * step * offset_fact, (self.rand.random() - 0.5) * step * offset_fact]
+            self.draw_image_at(vect.add(fill_point, offset), self.rand.choice(image_set))
 
     def draw_all_mountains(self, gen, points_per_mountain=1):
         dps = []
@@ -316,7 +344,7 @@ class MapCanvas:
             if i % points_per_mountain != 0:
                 continue
             p = sorted_points[i]
-            self.draw_image_at(p, self.mountain)
+            self.draw_image_at(p, self.rand.choice(self.mountain))
 
     def draw_map(self, gen, debug=False):
         # Water
@@ -350,7 +378,7 @@ class MapCanvas:
             points = []
             for vert_idx in region:
                 points.append(gen.voronoi.vertices[vert_idx])
-            self.fill_region_with_image(points, self.hill, 12, offset_fact=0.2)
+            self.fill_region_with_image_set(points, self.hill, 12, offset_fact=0.2)
 
         # Forests
         for d_p in gen.forest_dps:
@@ -358,7 +386,7 @@ class MapCanvas:
             points = []
             for vert_idx in region:
                 points.append(gen.voronoi.vertices[vert_idx])
-            self.fill_region_with_image(points, self.tree)
+            self.fill_region_with_image_set(points, self.tree)
 
     def draw_debug_geometry(self, gen):
         for ridge in gen.voronoi.ridge_vertices:

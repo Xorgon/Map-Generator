@@ -55,3 +55,7 @@ def split_line(p1, p2, rand, mag_fact=0.25):
 def subtract(a, b):
     """ Subtracts b from a. """
     return [a[0] - b[0], a[1] - b[1]]
+
+
+def add(a, b):
+    return [a[0] + b[0], a[1] + b[1]]
